@@ -134,6 +134,12 @@ sudo -u backuppc /home/backuppc/retired_hosts --run
 
 El script obtiene su configuración desde un archivo externo.
 
+Por defecto, el archivo de configuración debe crearse en:
+
+```text
+/home/backuppc/retired_hosts.conf
+```
+
 Ejemplo:
 
 ```bash
@@ -143,18 +149,21 @@ PCDIR="/data0/backuppc/pc"
 LOGDIR="/home/backuppc/log"
 ```
 
-Mantener la configuración fuera del script permite reutilizar la misma versión en distintos servidores sin necesidad de modificar el código.
+Mantener la configuración separada del script permite utilizar la misma versión en distintos servidores BackupPC sin necesidad de modificar el código fuente.
 
-Las variables principales son:
+El archivo de configuración contiene las siguientes variables:
 
-| Variable    | Descripción                                                       |
-| ----------- | ----------------------------------------------------------------- |
-| `CONFDIR`   | Directorio donde BackupPC almacena la configuración de cada host. |
-| `HOSTSFILE` | Archivo principal de hosts de BackupPC.                           |
-| `PCDIR`     | Directorio donde se almacenan físicamente los backups.            |
-| `LOGDIR`    | Directorio donde el script escribe los archivos de log.           |
+| Variable    | Descripción                                                                  |
+| ----------- | ---------------------------------------------------------------------------- |
+| `CONFDIR`   | Directorio donde BackupPC almacena la configuración individual de cada host. |
+| `HOSTSFILE` | Archivo principal de hosts de BackupPC.                                      |
+| `PCDIR`     | Directorio del repositorio donde se almacenan los backups de los hosts.      |
+| `LOGDIR`    | Directorio donde el script generará los archivos de log.                     |
 
-Una vez creado el archivo de configuración, verificar que todas las rutas correspondan a la instalación de BackupPC antes de ejecutar el script.
+Una vez creado **`/home/backuppc/retired_hosts.conf`**, verificar que todas las rutas correspondan a la instalación de BackupPC antes de ejecutar el script.
+
+Se recomienda realizar una ejecución manual para validar la configuración antes de programar la ejecución automática mediante cron.
+
 ---
 
 # Referencia de comandos

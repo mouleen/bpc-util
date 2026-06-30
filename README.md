@@ -128,9 +128,16 @@ sudo -u backuppc /home/backuppc/retired_hosts --run
 
 ---
 
+
 # Configuration
 
 The script reads its settings from an external configuration file.
+
+By default, the configuration file must be created as:
+
+```text
+/home/backuppc/retired_hosts.conf
+```
 
 Example:
 
@@ -141,9 +148,9 @@ PCDIR="/data0/backuppc/pc"
 LOGDIR="/home/backuppc/log"
 ```
 
-Keeping configuration outside the script allows the same version to be deployed across multiple BackupPC servers without modifying the source code.
+Keeping the configuration separate from the script allows the same version to be deployed across multiple BackupPC servers without modifying the source code.
 
-A typical configuration includes:
+The configuration file contains the following variables:
 
 | Variable    | Description                                    |
 | ----------- | ---------------------------------------------- |
@@ -152,7 +159,9 @@ A typical configuration includes:
 | `PCDIR`     | Backup repository containing host directories. |
 | `LOGDIR`    | Directory where execution logs are written.    |
 
-After creating the configuration file, verify that all paths match your BackupPC installation before running the script.
+After creating **`/home/backuppc/retired_hosts.conf`**, verify that all paths match your BackupPC installation before running the script.
+
+A manual execution is recommended to confirm that the configuration is correct before scheduling the script with cron.
 
 ---
 
