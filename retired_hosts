@@ -1,0 +1,268 @@
+#!/bin/bash
+##
+## BackupPC - Retired Hosts Cleanup
+##
+
+#CONFDIR="/etc/BackupPC/pc"
+#HOSTSFILE="/etc/BackupPC/hosts"
+#PCDIR="/data0/backuppc/pc"
+#LOG="/home/backuppc/backuppc-retired-hosts_$(date +%d).log"
+
+CONFIG_FILE="/etc/BackupPC/retired-hosts.conf"
+
+if [ ! -r "$CONFIG_FILE" ]; then
+    echo "ERROR: Configuration file not found: $CONFIG_FILE"
+    exit 1
+fi
+
+# Carga la configuración
+. "$CONFIG_FILE"
+
+MODE="${1:-}"
+
+usage() {
+cat <<EOF
+Uso:
+
+    $0 --check
+    $0 --run
+    $0 --check-orphans
+    $0 --cleanup-orphans
+
+EOF
+exit 1
+}
+
+[ ! -d $LOGDIR ] && mkdir -p $LOGDIR
+
+
+log() {
+    if [ "$1" = "0" ]; then
+        : > "$LOG"
+        return
+    fi
+
+    echo "[$(date '+%F %T')] $*" | tee -a "$LOG"
+#    echo "$(date '+%Y-%m-%d %H:%M:%S') - $*" >> "$LOG"
+}
+
+
+delete_backups() {
+
+    local host="$1"
+    local keep="$2"
+    local backups="$PCDIR/$host/backups"
+
+    [ -f "$backups" ] || return
+
+    local ids
+
+    ids=$(awk '$2=="full"{print $1}' "$backups")
+
+    if [ "$keep" -gt 0 ]
+    then
+        ids=$(echo "$ids" | head -n -"$keep")
+    fi
+
+    while read id
+    do
+        [ -z "$id" ] && continue
+
+        log "DELETE  $host (Backup #$id)"
+
+        if /home/backuppc/bin/BackupPC_backupDelete \
+            -h "$host" \
+            -n "$id" \
+            -f >>"$LOG" 2>&1
+        then
+            deleted_backups=$((deleted_backups+1))
+            log "DONE    $host (Backup #$id)"
+        else
+            errors=$((errors+1))
+            log "ERROR   $host (Backup #$id)"
+            break
+        fi
+
+    done <<< "$ids"
+}
+
+process_disabled_hosts() {
+
+    for cfg in "$CONFDIR"/*.pl
+    do
+
+        [ -f "$cfg" ] || continue
+
+        total=$((total+1))
+
+        host=$(basename "$cfg" .pl)
+
+        grep -q '\$Conf{BackupsDisable} *= *[12];' "$cfg" || continue
+
+        disabled=$((disabled+1))
+
+        backups="$PCDIR/$host/backups"
+
+        if [ ! -f "$backups" ]
+        then
+            warnings=$((warnings+1))
+            log "WARN    $host (archivo backups inexistente)"
+            continue
+        fi
+
+        fulls=$(awk '$2=="full"{c++} END{print c+0}' "$backups")
+
+        if [ "$fulls" -le 2 ]
+        then
+            log "OK      $host ($fulls Full)"
+            continue
+        fi
+
+        pending=$((pending+1))
+
+        log "ACTION  $host ($fulls Full -> 2 Full)"
+
+        [ "$MODE" = "--check" ] && continue
+
+        if ! grep -q '^\$Conf{FullKeepCnt} = \[2\];$' "$cfg"
+        then
+            echo '$Conf{FullKeepCnt} = [2];' >> "$cfg"
+        fi
+
+        delete_backups "$host" 2
+
+        processed=$((processed+1))
+
+    done
+
+}
+
+cleanup_orphan_hosts() {
+
+    for hostdir in "$PCDIR"/*
+    do
+
+        [ -d "$hostdir" ] || continue
+
+        host=$(basename "$hostdir")
+
+        awk -v h="$host" '$1==h{found=1; exit} END{exit !found}' "$HOSTSFILE" && continue
+
+        orphan_backups="$hostdir/backups"
+
+        if [ ! -f "$orphan_backups" ]
+        then
+            warnings=$((warnings+1))
+            log "WARN    $host (archivo backups inexistente)"
+            continue
+        fi
+
+        fulls=$(awk '$2=="full"{c++} END{print c+0}' "$orphan_backups")
+
+        if [ "$fulls" -eq 0 ]
+        then
+            log "OK      $host (sin backups Full)"
+            continue
+        fi
+
+        pending=$((pending+1))
+
+        log "ACTION  $host (eliminar directorio completo)"
+
+        [ "$MODE" = "--check-orphans" ] && continue
+
+        log "DELETE  $host (rm -rf $hostdir)"
+
+        if rm -rf -- "$hostdir"
+        then
+            processed=$((processed+1))
+            #deleted_backups=$((deleted_backups+fulls))
+            log "DONE    $host"
+        else
+            errors=$((errors+1))
+            log "ERROR   $host"
+        fi
+
+    done
+
+}
+case "$MODE" in
+
+    --check|--run|--check-orphans|--cleanup-orphans)
+        ;;
+
+    *)
+        usage
+        ;;
+
+esac
+
+start=$(date +%s)
+
+total=0
+disabled=0
+pending=0
+processed=0
+deleted_backups=0
+warnings=0
+errors=0
+
+log 0
+log "=================================================="
+log "Inicio ($MODE)"
+
+case "$MODE" in
+
+    --check|--run)
+        process_disabled_hosts
+        ;;
+
+    --check-orphans|--cleanup-orphans)
+        cleanup_orphan_hosts
+        ;;
+
+esac
+
+elapsed=$(( $(date +%s) - start ))
+
+log "--------------------------------------------------"
+
+case "$MODE" in
+
+    --check)
+
+        log "Hosts analizados......: $total"
+        log "Hosts deshabilitados..: $disabled"
+        log "Hosts con >2 Full.....: $pending"
+        ;;
+
+    --run)
+
+        log "Hosts analizados......: $total"
+        log "Hosts deshabilitados..: $disabled"
+        log "Hosts con >2 Full.....: $pending"
+        log "Hosts procesados......: $processed"
+        log "Backups eliminados....: $deleted_backups"
+        ;;
+
+    --check-orphans)
+
+        log "Hosts huérfanos........: $pending"
+        ;;
+
+    --cleanup-orphans)
+
+        log "Hosts huérfanos........: $pending"
+#        log "Hosts procesados......: $processed"
+        log "Directorios eliminados: $processed"
+        ;;
+
+esac
+log "Advertencias..........: $warnings"
+log "Errores...............: $errors"
+log "Duración..............: ${elapsed}s"
+log "Fin"
+log "=================================================="
+
+echo "Full Log Path: $LOG"
+exit 0

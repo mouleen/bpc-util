@@ -1,0 +1,5 @@
+CONFDIR="/etc/BackupPC/pc"
+HOSTSFILE="/etc/BackupPC/hosts"
+PCDIR="/data/backuppc/pc"
+LOGDIR="/var/log/backuppc"
+LOG="${LOGDIR}/retired-hosts_$(date +%d).log"
