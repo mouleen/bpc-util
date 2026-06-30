@@ -542,3 +542,17 @@ This project was created to simplify the day-to-day administration of BackupPC e
 
 It is intended to complement BackupPC—not replace it—by reducing administrative overhead, improving repository hygiene and helping administrators keep large BackupPC installations clean, consistent and easy to maintain over time.
 
+---
+
+# Author
+
+Developed by **mouleen**.
+
+Infrastructure Engineer with extensive experience in Linux, BackupPC, virtualization, networking and automation.
+
+This project was created to simplify BackupPC administration in large environments by automating repetitive maintenance tasks while preserving BackupPC's native behavior.
+
+Contributions, suggestions and pull requests are welcome.
+
+GitHub: https://github.com/mouleen
+
