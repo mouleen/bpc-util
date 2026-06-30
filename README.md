@@ -1,5 +1,7 @@
 # BackupPC Retired Hosts
 
+🌐 **Languages:** **English** | [Español](README.es.md)
+
 > Automate the lifecycle of retired BackupPC hosts using BackupPC's native retention policies while keeping the backup repository free of orphan directories.
 
 ---
