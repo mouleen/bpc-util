@@ -137,7 +137,7 @@ El script obtiene su configuración desde un archivo externo.
 Por defecto, el archivo de configuración debe crearse en:
 
 ```text
-/home/backuppc/retired_hosts.conf
+/etc/BackupPC/retired_hosts.conf
 ```
 
 Ejemplo:
@@ -160,7 +160,7 @@ El archivo de configuración contiene las siguientes variables:
 | `PCDIR`     | Directorio del repositorio donde se almacenan los backups de los hosts.      |
 | `LOGDIR`    | Directorio donde el script generará los archivos de log.                     |
 
-Una vez creado **`/home/backuppc/retired_hosts.conf`**, verificar que todas las rutas correspondan a la instalación de BackupPC antes de ejecutar el script.
+Una vez creado **`/etc/BackupPC/retired_hosts.conf`**, verificar que todas las rutas correspondan a la instalación de BackupPC antes de ejecutar el script.
 
 Se recomienda realizar una ejecución manual para validar la configuración antes de programar la ejecución automática mediante cron.
 
